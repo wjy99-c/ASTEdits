@@ -5,3 +5,4 @@
 /build/insertsample.dSYM/
 /build/movesample.dSYM/
 /build/rewritersample.dSYM/
+/build/*.dSYM/
