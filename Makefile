@@ -1,11 +1,12 @@
 #-------------------------------------------------------------------------------
 # Sample makefile for building the code samples. 
 # Edited by Qian Zhang Dec 27, 2020
+# Rewrote by Jiyuan Wang Jan 10,
 #-------------------------------------------------------------------------------
 
-LLVM_SRC_PATH := $$HOME/llvm/llvm_svn_rw
+LLVM_SRC_PATH := /usr/local/opt/llvm/
 
-LLVM_BUILD_PATH := $$HOME/llvm/build/svn-ninja-release
+LLVM_BUILD_PATH := /usr/local/opt/llvm
 LLVM_BIN_PATH 	:= $(LLVM_BUILD_PATH)/bin
 
 $(info -----------------------------------------------)
@@ -14,7 +15,8 @@ $(info Using LLVM_BUILD_PATH = $(LLVM_BUILD_PATH))
 $(info Using LLVM_BIN_PATH = $(LLVM_BIN_PATH))
 $(info -----------------------------------------------)
 
-CXX := g++
+CC := /usr/local/opt/llvm/bin/clang
+CXX := $(CC)++
 CXXFLAGS := -fno-rtti -O0 -g
 PLUGIN_CXXFLAGS := -fpic
 
@@ -31,7 +33,6 @@ CLANG_INCLUDES := \
 	-I$(LLVM_BUILD_PATH)/tools/clang/include
 
 CLANG_LIBS := \
-	-Wl,--start-group \
 	-lclangAST \
 	-lclangASTMatchers \
 	-lclangAnalysis \
@@ -54,8 +55,7 @@ CLANG_LIBS := \
 	-lclangSerialization \
 	-lclangToolingCore \
 	-lclangTooling \
-	-lclangFormat \
-	-Wl,--end-group
+	-lclangFormat 
 
 # Internal paths in this project
 SRC_CLANG_DIR := src
@@ -66,6 +66,8 @@ all: make_builddir \
 	emit_build_config \
         $(BUILDDIR)/rewritersample \
         $(BUILDDIR)/insertsample \
+		$(BUILDDIR)/deletesample \
+		$(BUILDDIR)/movesample \
 	$(BUILDDIR)/matchers_rewriter \
 	$(BUILDDIR)/tooling_sample
 
@@ -85,7 +87,15 @@ $(BUILDDIR)/rewritersample: $(SRC_CLANG_DIR)/rewritersample.cpp
 	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
 		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
 
+$(BUILDDIR)/movesample: $(SRC_CLANG_DIR)/move_code.cpp
+	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
+		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
+
 $(BUILDDIR)/insertsample: $(SRC_CLANG_DIR)/insert_code.cpp
+	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
+		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
+
+$(BUILDDIR)/deletesample: $(SRC_CLANG_DIR)/delete_code.cpp
 	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
 		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
 

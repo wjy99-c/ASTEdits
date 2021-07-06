@@ -35,19 +35,19 @@ public:
  
   bool VisitStmt(Stmt *s) {
     // Only care about If statements.
-    if (isa<IfStmt>(s)) {
-      IfStmt *IfStatement = cast<IfStmt>(s);
-      Stmt *Then = IfStatement->getThen();
-
-      TheRewriter.InsertText(Then->getLocStart(), "// the 'if' part\n", true,
+    std::string ContentOfs;
+    ContentOfs = TheRewriter.getRewrittenText(s->getSourceRange());
+    if (ContentOfs==insert_location) {
+      TheRewriter.InsertText(s->getBeginLoc().getLocWithOffset(-1), insert_content, true,
                              true);
-
-      Stmt *Else = IfStatement->getElse();
-      if (Else)
-        TheRewriter.InsertText(Else->getLocStart(), "// the 'else' part\n",
-                               true, true);
     }
 
+    return true;
+  }
+
+  bool setArgument(std::string location_str, std::string content){    
+    insert_location = location_str;
+    insert_content = content;
     return true;
   }
 
@@ -74,7 +74,7 @@ public:
       // And after
       std::stringstream SSAfter;
       SSAfter << "\n// End function " << FuncName;
-      ST = FuncBody->getLocEnd().getLocWithOffset(1);
+      ST = FuncBody->getEndLoc().getLocWithOffset(1);
       TheRewriter.InsertText(ST, SSAfter.str(), true, true);
     }
 
@@ -82,6 +82,7 @@ public:
   }
 
 private:
+  std::string insert_location="b[0] = 1", insert_content="//byebye\n";
   Rewriter &TheRewriter;
 };
 
@@ -137,7 +138,7 @@ int main(int argc, char *argv[]) {
   TheRewriter.setSourceMgr(SourceMgr, TheCompInst.getLangOpts());
 
   // Set the main file handled by the source manager to the input file.
-  const FileEntry *FileIn = FileMgr.getFile(argv[1]);
+  const FileEntry *FileIn = FileMgr.getFile(argv[1]).get();
   SourceMgr.setMainFileID(
       SourceMgr.createFileID(FileIn, SourceLocation(), SrcMgr::C_User));
   TheCompInst.getDiagnosticClient().BeginSourceFile(

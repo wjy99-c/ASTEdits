@@ -10,8 +10,8 @@
 #include <string>
 #include <iostream>
 
-#include "clang/AST/ASTConsumer.h"
 #include "clang/AST/RecursiveASTVisitor.h"
+#include "clang/AST/ASTConsumer.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
@@ -37,28 +37,26 @@ public:
     QualType QT = s->getType();
     std::string TypeStr = QT.getAsString();    
     std::cout<<"Type is : "<<TypeStr<<"\n";
-    std::string varName = s->getName();   
+    llvm:StringRef varName = s->getName();
+    // std::string varName = s->getName();   
     bool canChange = TypeStr.find("int") != std::string::npos || TypeStr.compare("int")==0;
     if(canChange){
       printf("found you!\n");
-      TheRewriter.ReplaceText(s->getTypeSourceInfo()->getTypeLoc().getLocStart(),3,"custom_type");
+      TheRewriter.ReplaceText(s->getTypeSourceInfo()->getTypeLoc().getBeginLoc(),3,"custom_type");
     }
+    return true;
+  }
+
+  bool setArgument(std::string location_str, std::string content){    
+    location_content = location_str;
+    rewrite_content = content;
     return true;
   }
  
   bool VisitStmt(Stmt *s) {
     // Only care about If statements.
-    if (isa<IfStmt>(s)) {
-      IfStmt *IfStatement = cast<IfStmt>(s);
-      Stmt *Then = IfStatement->getThen();
-
-      TheRewriter.InsertText(Then->getLocStart(), "// the 'if' part\n", true,
-                             true);
-
-      Stmt *Else = IfStatement->getElse();
-      if (Else)
-        TheRewriter.InsertText(Else->getLocStart(), "// the 'else' part\n",
-                               true, true);
+    if (location_content==TheRewriter.getRewrittenText(s->getSourceRange())) {
+      TheRewriter.ReplaceText(s->getSourceRange(),rewrite_content);
     }
 
     return true;
@@ -87,7 +85,7 @@ public:
       // And after
       std::stringstream SSAfter;
       SSAfter << "\n// End function " << FuncName;
-      ST = FuncBody->getLocEnd().getLocWithOffset(1);
+      ST = FuncBody->getEndLoc().getLocWithOffset(1);
       TheRewriter.InsertText(ST, SSAfter.str(), true, true);
     }
 
@@ -95,6 +93,7 @@ public:
   }
 
 private:
+  std::string location_content="b[0] = 1;", rewrite_content="b[2] = 1;";
   Rewriter &TheRewriter;
 };
 
@@ -150,7 +149,7 @@ int main(int argc, char *argv[]) {
   TheRewriter.setSourceMgr(SourceMgr, TheCompInst.getLangOpts());
 
   // Set the main file handled by the source manager to the input file.
-  const FileEntry *FileIn = FileMgr.getFile(argv[1]);
+  const FileEntry *FileIn = FileMgr.getFile(argv[1]).get();
   SourceMgr.setMainFileID(
       SourceMgr.createFileID(FileIn, SourceLocation(), SrcMgr::C_User));
   TheCompInst.getDiagnosticClient().BeginSourceFile(
@@ -159,6 +158,7 @@ int main(int argc, char *argv[]) {
   // Create an AST consumer instance which is going to get called by
   // ParseAST.
   MyASTConsumer TheConsumer(TheRewriter);
+  printf("pause\n");
 
   // Parse the file to AST, registering our consumer as the AST consumer.
   ParseAST(TheCompInst.getPreprocessor(), &TheConsumer,
@@ -166,6 +166,7 @@ int main(int argc, char *argv[]) {
 
   // At this point the rewriter's buffer should be full with the rewritten
   // file contents.
+
   const RewriteBuffer *RewriteBuf =
       TheRewriter.getRewriteBufferFor(SourceMgr.getMainFileID());
   llvm::outs() << std::string(RewriteBuf->begin(), RewriteBuf->end());

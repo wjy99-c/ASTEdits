@@ -1,0 +1,8 @@
+.DS_Store
+/.vscode/
+/.idea/
+/build/deletesample.dSYM/
+/build/insertsample.dSYM/
+/build/movesample.dSYM/
+/build/rewritersample.dSYM/
+/build/*.dSYM/
