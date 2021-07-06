@@ -7,6 +7,9 @@ void foo(int* a, int *b) {
   {
     b[0] = 1;
   }
+  for (int i = 0; i < 10; ++i) {
+    b[0]++;
+  }
 }
 int bar(float x, float y) {
   return 1;

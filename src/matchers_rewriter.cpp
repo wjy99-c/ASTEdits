@@ -52,7 +52,10 @@ public:
 
   virtual void run(const MatchFinder::MatchResult &Result) {
     const VarDecl *IncVar = Result.Nodes.getNodeAs<VarDecl>("incVarName");
-    Rewrite.InsertText(IncVar->getBeginLoc(), "/* increment */", true, true);
+    const ForStmt *FORS = Result.Nodes.getNodeAs<ForStmt>("forStmt");
+    const Stmt *ForBody = FORS->getBody();
+    Rewrite.InsertText(IncVar->getEndLoc(), "/* increment */", true, true);
+    Rewrite.InsertText(ForBody->getBeginLoc().getLocWithOffset(1),"\n//for\n",true, true);
   }
 
 private:
@@ -85,7 +88,7 @@ public:
                     hasLHS(ignoringParenImpCasts(declRefExpr(to(
                         varDecl(hasType(isInteger())).bind("condVarName"))))),
                     hasRHS(expr(hasType(isInteger()))))))
-            .bind("forLoop"),
+            .bind("forStmt"),
         &HandlerForFor);
   }
 
