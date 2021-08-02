@@ -38,9 +38,27 @@ public:
 
     bool VisitStmt(Stmt *s) {
         // Only care about If statements.
-        if (delete_content==TheRewriter.getRewrittenText(s->getSourceRange())) {
+        if (isa<IfStmt>(s)) {
+            IfStmt *IfStatement = cast<IfStmt>(s);
+            Stmt *Then = IfStatement->getThen();
+
+            TheRewriter.InsertText(Then->getBeginLoc(),
+                    //TheRewriter.InsertText(Then->getLocStart(),
+                                   "// the 'if' part\n",
+                                   true, true);
+
+            Stmt *Else = IfStatement->getElse();
+            if (Else)
+                TheRewriter.InsertText(Else->getBeginLoc(),
+                                       "// the 'else' part\n",
+                                       true, true);
+            printf("Now I will remove the if-statement\n");
             TheRewriter.RemoveText(s->getSourceRange());
         }
+
+        //if (delete_content==TheRewriter.getRewrittenText(s->getSourceRange())) {
+        //    TheRewriter.RemoveText(s->getSourceRange());
+        //}
 
         return true;
     }
@@ -63,6 +81,8 @@ public:
             // Function name
             DeclarationName DeclName = f->getNameInfo().getName();
             string FuncName = DeclName.getAsString();
+            function_array[function_num] = FuncName;
+            function_num++;
 
             // Add comment before
             stringstream SSBefore;
@@ -84,7 +104,9 @@ public:
 private:
 
     Rewriter &TheRewriter;
-    std::string delete_content="b[0] = 1;";
+    std::string delete_content="    b[0] = 1;";
+    std::string function_array[10];
+    int function_num=0;
 };
 
 

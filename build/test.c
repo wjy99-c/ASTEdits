@@ -1,4 +1,9 @@
-void foo(int* a, int *b) {
+
+int bar(float x, float y) {
+  return 1;
+} 
+
+void foo(int a[], int b[], int N) {
   if (a[0] > 1)
   {
     b[0] = 2;
@@ -7,10 +12,16 @@ void foo(int* a, int *b) {
   {
     b[0] = 1;
   }
-  for (int i = 0; i < 10; ++i) {
+  for (int i = 0; i < N; ++i) {
     b[0]++;
   }
 }
-int bar(float x, float y) {
-  return 1;
-} 
+
+int main(int argc, char const *argv[])
+{
+  int a[10];
+  int b[10];
+  foo(a, b, 10);
+  bar(0.3,0.4);
+  return 0;
+}

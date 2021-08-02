@@ -68,8 +68,8 @@ all: make_builddir \
         $(BUILDDIR)/insertsample \
 		$(BUILDDIR)/deletesample \
 		$(BUILDDIR)/movesample \
-	$(BUILDDIR)/matchers_rewriter \
-	$(BUILDDIR)/tooling_sample
+	$(BUILDDIR)/pattern6 \
+	$(BUILDDIR)/pattern5
 
 .PHONY: test
 test: emit_build_config
@@ -99,11 +99,11 @@ $(BUILDDIR)/deletesample: $(SRC_CLANG_DIR)/delete_code.cpp
 	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
 		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
 
-$(BUILDDIR)/tooling_sample: $(SRC_CLANG_DIR)/tooling_sample.cpp
+$(BUILDDIR)/pattern6: $(SRC_CLANG_DIR)/pattern6.cpp
 	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
 		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
 
-$(BUILDDIR)/matchers_rewriter: $(SRC_CLANG_DIR)/matchers_rewriter.cpp
+$(BUILDDIR)/pattern5: $(SRC_CLANG_DIR)/pattern5.cpp
 	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
 		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
 
