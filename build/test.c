@@ -26,6 +26,7 @@ void foo(int a[], int b[], int N) {
   }
   int i;
   for (i = 0; i < N; ++i) {
+    #pragma unroll
     b[0]++;
   }
 }

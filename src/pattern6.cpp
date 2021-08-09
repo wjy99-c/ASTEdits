@@ -59,10 +59,6 @@ public:
         return true;
     }
 
-    bool setArgument(std::string location_str, std::string content){    
-        delete_content = content;
-        return true;
-    }
 
     bool VisitFunctionDecl(FunctionDecl *f) {
         // Only function definitions (with bodies), not declarations.
@@ -98,7 +94,6 @@ public:
 private:
 
     Rewriter &TheRewriter;
-    std::string delete_content="    b[0] = 1;";
 };
 
 

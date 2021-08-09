@@ -72,7 +72,8 @@ all: make_builddir \
 	$(BUILDDIR)/pattern5 \
 	$(BUILDDIR)/pattern1 \
 	$(BUILDDIR)/pattern4 \
-	$(BUILDDIR)/pattern2
+	$(BUILDDIR)/pattern2 \
+	$(BUILDDIR)/pattern_extract_for
 
 .PHONY: test
 test: emit_build_config
@@ -121,6 +122,11 @@ $(BUILDDIR)/pattern4: $(SRC_CLANG_DIR)/pattern4.cpp
 $(BUILDDIR)/pattern2: $(SRC_CLANG_DIR)/pattern2.cpp
 	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
 		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
+
+$(BUILDDIR)/pattern_extract_for: $(SRC_CLANG_DIR)/pattern_extract_for.cpp
+	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
+		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
+
 
 # Experimental tools
 .PHONY: experimental_tools
