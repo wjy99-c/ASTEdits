@@ -5,9 +5,12 @@
 // * Use the Rewriter API to rewrite the source code.
 //------------------------------------------------------------------------------
 
+
+//TODO: add Par argument number
 #include <cstdio>
 #include <string>
 #include <sstream>
+
 
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/RecursiveASTVisitor.h"
@@ -27,32 +30,85 @@
 using namespace clang;
 using namespace std;
 
+static std::string location_str="";
 
-// Undone
-
+// By implementing RecursiveASTVisitor, we can specify which AST nodes
+// we're interested in by overriding relevant methods.
 class MyASTVisitor : public RecursiveASTVisitor<MyASTVisitor>
 {
 public:
     MyASTVisitor(Rewriter &R)
             : TheRewriter(R)
     {}
+    int GetLoopNumber(){
+        int j = total_element;
+        int loop = 0;
+
+        while (j>0){
+            j = j/2;
+            loop++;
+        }
+
+        return loop;
+    }
 
     bool VisitStmt(Stmt *s) {
-        if (flag == true){
-            return true;
-        }
-        for (int i=0;i<function_num;i++){
-            if (TheRewriter.getRewrittenText(s->getSourceRange())==function_array[i]){
-                flag = true;
-                TheRewriter.InsertText(s->getBeginLoc(),"#pragma HLS dataflow\n");
+        if (isa<DeclStmt>(s)){
+            DeclStmt *del_stmt = cast<DeclStmt>(s);
+            Decl *del = del_stmt->getSingleDecl();
+            string type_string="";
+            string name="";
+            if (isa<VarDecl>(del)){
+                VarDecl *var_del = cast<VarDecl>(del);
+                name = var_del->getNameAsString();
+                const Type *type = var_del->getType().getTypePtr();
+                if (type->isConstantArrayType()){
+                    const ConstantArrayType *Array = cast<ConstantArrayType>(type);
+                    type_string = Array->getElementType().getAsString();
+                    //maybe we can use Array->getsize to update total_element
+                }
+                if (name == target_varible){
+                    target_type = type_string;
+                }
             }
         }
+        
+        printf("hello,%s\n",TheRewriter.getRewrittenText(s->getSourceRange()).c_str());
+        if (location==TheRewriter.getRewrittenText(s->getSourceRange())){
+                printf("hello,%s",TheRewriter.getRewrittenText(s->getSourceRange()).c_str());
+                int j = total_element;
+                std::string def_code = "";
+                for (int i=1;i<loop_number;i++){
+                    def_code += target_type+" window"+to_string(i)+"["+to_string(j/2)+"] = {0};\n";
+                    j = j/2;
+                }
+
+                std::string loop_code = "";
+                j = total_element;
+                loop_code += "L1:for(ap_uint<"+to_string(loop_number)+"> x=0; x.to_uint()<"+to_string(j/2)+";x++){\n";
+                loop_code += "  #pragma HLS PIPELINE\n";
+                loop_code += "  window1[x] = "+target_varible+"[x]+"+target_varible+"["+to_string(j/2)+"+x];\n}\n";
+                j = j/2;
+
+                for (int i=2;i<loop_number;i++){
+                    loop_code += "L"+to_string(i)+":for(ap_uint<"+to_string(loop_number)+"> x=0; x.to_uint()<"+to_string(j/2)+";x++){\n";
+                    loop_code += "  #pragma HLS PIPELINE\n";
+                    loop_code += "  window"+to_string(i)+"[x] = window"+to_string(i-1)+"[x]+window"+to_string(i-1)+"["+to_string(j/2)+"+x];\n}\n";
+                    j=j/2;
+                }
+
+                TheRewriter.InsertText(s->getBeginLoc(),def_code+loop_code);
+        }
+
+        //if (delete_content==TheRewriter.getRewrittenText(s->getSourceRange())) {
+        //    TheRewriter.RemoveText(s->getSourceRange());
+        //}
 
         return true;
     }
 
-    bool setArgument(std::string location_str, std::string content){    
-        delete_content = content;
+    bool setArgument(std::string location_str){    
+        location = location_str;
         return true;
     }
 
@@ -69,8 +125,6 @@ public:
             // Function name
             DeclarationName DeclName = f->getNameInfo().getName();
             string FuncName = DeclName.getAsString();
-            function_array[function_num] = FuncName;
-            function_num++;
 
             // Add comment before
             stringstream SSBefore;
@@ -92,10 +146,11 @@ public:
 private:
 
     Rewriter &TheRewriter;
-    std::string delete_content = "    b[0] = 1;";
-    std::string function_array[10];
-    int function_num = 0;
-    bool flag = false;
+    std::string location=location_str;
+    int total_element = 32;
+    int loop_number = GetLoopNumber();
+    std::string target_varible = "b";
+    std::string target_type = "";
 };
 
 
@@ -125,10 +180,11 @@ private:
 
 int main(int argc, char *argv[])
 {
-    if (argc != 2) {
+    if (argc < 2) {
         llvm::errs() << "Usage: delete_code <filename>\n";
         return 1;
     }
+    location_str = argv[2];
 
     // CompilerInstance will hold the instance of the Clang compiler for us,
     // managing the various objects needed to run the compiler.

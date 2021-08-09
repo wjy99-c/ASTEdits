@@ -69,7 +69,10 @@ all: make_builddir \
 		$(BUILDDIR)/deletesample \
 		$(BUILDDIR)/movesample \
 	$(BUILDDIR)/pattern6 \
-	$(BUILDDIR)/pattern5
+	$(BUILDDIR)/pattern5 \
+	$(BUILDDIR)/pattern1 \
+	$(BUILDDIR)/pattern4 \
+	$(BUILDDIR)/pattern2
 
 .PHONY: test
 test: emit_build_config
@@ -104,6 +107,18 @@ $(BUILDDIR)/pattern6: $(SRC_CLANG_DIR)/pattern6.cpp
 		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
 
 $(BUILDDIR)/pattern5: $(SRC_CLANG_DIR)/pattern5.cpp
+	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
+		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
+
+$(BUILDDIR)/pattern1: $(SRC_CLANG_DIR)/pattern1.cpp
+	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
+		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
+
+$(BUILDDIR)/pattern4: $(SRC_CLANG_DIR)/pattern4.cpp
+	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
+		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
+
+$(BUILDDIR)/pattern2: $(SRC_CLANG_DIR)/pattern2.cpp
 	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
 		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
 
