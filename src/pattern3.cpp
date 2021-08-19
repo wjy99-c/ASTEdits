@@ -47,7 +47,7 @@ public:
             Stmt *Operation = ForStatement->getBody();
             TheRewriter.InsertText(Operation->getBeginLoc().getLocWithOffset(1),"#pragma HLS ARRAY_PARTITION variable=f cyclic factor="+to_string(cyclic_factor)+" dim="+to_string(dim)+"\n",true, true);
             //TheRewriter.RemoveText(s->getSourceRange());
-            TheRewriter.InsertText(Cond->getBeginLoc(),"#pragma HLS UNROLL factor="+to_string(cyclic_factor)+"\n#pragma HLS pipeline\n");
+            TheRewriter.InsertText(Cond->getBeginLoc(),"\n#pragma HLS UNROLL factor="+to_string(cyclic_factor)+"\n#pragma HLS pipeline\n");
         }
 
         //if (delete_content==TheRewriter.getRewrittenText(s->getSourceRange())) {

@@ -47,15 +47,22 @@ public:
             Stmt *Cond = ForStatement->getCond();
             Stmt *Operation = ForStatement->getBody();
 
-            TheRewriter.InsertText(Operation->getBeginLoc().getLocWithOffset(1),"#pragma HLS ARRAY_PARTITION variable=f cyclic factor="+to_string(cyclic_factor)+" dim="+to_string(dim)+"\n",true, true);
+            TheRewriter.InsertText(Operation->getBeginLoc().getLocWithOffset(1),"\n#pragma HLS pipeline\n",true, true);
             //TheRewriter.RemoveText(s->getSourceRange());
-            TheRewriter.InsertText(Cond->getBeginLoc(),"#pragma HLS pipeline\n");
         }
-
         //if (delete_content==TheRewriter.getRewrittenText(s->getSourceRange())) {
         //    TheRewriter.RemoveText(s->getSourceRange());
         //}
 
+        return true;
+    }
+
+    bool VisitVarDecl(VarDecl *var){
+        std::string varName = var->getQualifiedNameAsString();
+        std::string varType = var->getType().getAsString();
+        if (varType.find(" [")!= std::string::npos) {
+            TheRewriter.InsertText(var->getEndLoc().getLocWithOffset(2),"\n#pragma HLS ARRAY_PARTITION variable="+varName+" cyclic factor="+to_string(cyclic_factor)+" dim="+to_string(dim)+"\n");
+        }
         return true;
     }
 
