@@ -5,8 +5,6 @@
 // * Use the Rewriter API to rewrite the source code.
 //------------------------------------------------------------------------------
 
-
-//TODO: add Par argument number
 #include <cstdio>
 #include <string>
 #include <sstream>
@@ -40,25 +38,47 @@ public:
     {}
 
     bool VisitStmt(Stmt *s) {
-        // Only care about for statements.
-        if (isa<ForStmt>(s)) {
-            ForStmt *ForStatement = cast<ForStmt>(s);
-            Stmt *Cond = ForStatement->getCond();
-            Stmt *Operation = ForStatement->getBody();
+        clang::SourceLocation startloc = s->getBeginLoc();
+        clang::SourceManager &srcmgr = TheRewriter.getSourceMgr();
 
-            string body_content = TheRewriter.getRewrittenText(Operation->getSourceRange());
-            if (body_content.find(pragma)!=string::npos){
-                llvm::outs() <<TheRewriter.getRewrittenText(s->getSourceRange())<<"\n";
+        //find #pragma dataflow
+        if (flag == false){                                 
+            if (TheRewriter.getRewrittenText(s->getSourceRange()).find(pragma)!=string::npos){
+                start_line_num = srcmgr.getExpansionLineNumber(startloc);
+                function_map[0] = true;
+
+                flag = true;
             }
         }
 
-        //if (delete_content==TheRewriter.getRewrittenText(s->getSourceRange())) {
-        //    TheRewriter.RemoveText(s->getSourceRange());
-        //}
+        //find following function call
+        else{
+            int line_num = srcmgr.getExpansionLineNumber(startloc);
+            flag = false;
+            for (int i=0;i<function_num;i++){
+                if (TheRewriter.getRewrittenText(s->getSourceRange())==function_array[i]){
+                    if ((line_num-start_line_num>0)&(function_map[line_num-start_line_num-1])) {
+                        function_map[line_num-start_line_num] = true;
+                        flag = true;
+                    }
+                }
+            }
+            if (!function_map[line_num-start_line_num]){
+                int i=0;
+                while (function_map[i]){
+                    function_map[i] = false;
+                    i++;
+                }
+            }
+            else {
+                flag = false;
+            }
+            
+        }
+
 
         return true;
     }
-
 
     bool VisitFunctionDecl(FunctionDecl *f) {
         // Only function definitions (with bodies), not declarations.
@@ -73,6 +93,8 @@ public:
             // Function name
             DeclarationName DeclName = f->getNameInfo().getName();
             string FuncName = DeclName.getAsString();
+            function_array[function_num] = FuncName;
+            function_num++;
 
             // Add comment before
             stringstream SSBefore;
@@ -94,7 +116,12 @@ public:
 private:
 
     Rewriter &TheRewriter;
-    std::string pragma = "#pragma";
+    std::string function_array[100];
+    std::bool function_map[100];
+    int start_line_num = 0;
+    int function_num = 0;
+    bool flag = false;
+    std::string pragma = "#pragma HLS dataflow"
 };
 
 
