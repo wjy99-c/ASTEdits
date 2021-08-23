@@ -64,16 +64,14 @@ BUILDDIR := build
 .PHONY: all
 all: make_builddir \
 	emit_build_config \
-        $(BUILDDIR)/rewritersample \
-        $(BUILDDIR)/insertsample \
-		$(BUILDDIR)/deletesample \
-		$(BUILDDIR)/movesample \
-	$(BUILDDIR)/pattern6 \
-	$(BUILDDIR)/pattern5 \
-	$(BUILDDIR)/pattern1 \
-	$(BUILDDIR)/pattern4 \
-	$(BUILDDIR)/pattern2 \
-	$(BUILDDIR)/pattern_extract_for
+		$(BUILDDIR)/pattern6 \
+		$(BUILDDIR)/pattern5 \
+		$(BUILDDIR)/pattern1 \
+		$(BUILDDIR)/pattern4 \
+		$(BUILDDIR)/pattern2 \
+		$(BUILDDIR)/pattern_extract_14 \
+		$(BUILDDIR)/pattern_extract_5 \
+		$(BUILDDIR)/pattern_extract_236 
 
 .PHONY: test
 test: emit_build_config
@@ -87,21 +85,6 @@ emit_build_config: make_builddir
 make_builddir:
 	@test -d $(BUILDDIR) || mkdir $(BUILDDIR)
 
-$(BUILDDIR)/rewritersample: $(SRC_CLANG_DIR)/rewritersample.cpp
-	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
-		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
-
-$(BUILDDIR)/movesample: $(SRC_CLANG_DIR)/move_code.cpp
-	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
-		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
-
-$(BUILDDIR)/insertsample: $(SRC_CLANG_DIR)/insert_code.cpp
-	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
-		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
-
-$(BUILDDIR)/deletesample: $(SRC_CLANG_DIR)/delete_code.cpp
-	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
-		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
 
 $(BUILDDIR)/pattern6: $(SRC_CLANG_DIR)/pattern6.cpp
 	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
@@ -123,7 +106,15 @@ $(BUILDDIR)/pattern2: $(SRC_CLANG_DIR)/pattern2.cpp
 	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
 		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
 
-$(BUILDDIR)/pattern_extract_for: $(SRC_CLANG_DIR)/pattern_extract_for.cpp
+$(BUILDDIR)/pattern_extract_14: $(SRC_CLANG_DIR)/pattern_extract_14.cpp
+	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
+		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
+
+$(BUILDDIR)/pattern_extract_5: $(SRC_CLANG_DIR)/pattern_extract_5.cpp
+	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
+		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
+
+$(BUILDDIR)/pattern_extract_236: $(SRC_CLANG_DIR)/pattern_extract_236.cpp
 	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
 		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
 

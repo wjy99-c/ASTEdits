@@ -117,11 +117,11 @@ private:
 
     Rewriter &TheRewriter;
     std::string function_array[100];
-    std::bool function_map[100];
+    bool function_map[100];
     int start_line_num = 0;
     int function_num = 0;
     bool flag = false;
-    std::string pragma = "#pragma HLS dataflow"
+    std::string pragma = "#pragma HLS dataflow";
 };
 
 
