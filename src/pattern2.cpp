@@ -66,47 +66,9 @@ public:
         return true;
     }
 
-    bool setArgument(std::string location_str, std::string content){    
-        delete_content = content;
-        return true;
-    }
-
-    bool VisitFunctionDecl(FunctionDecl *f) {
-        // Only function definitions (with bodies), not declarations.
-        if (f->hasBody()) {
-            Stmt *FuncBody = f->getBody();
-
-            // Type name as string
-            //QualType QT = f->getResultType();
-            QualType QT = f->getReturnType();
-            string TypeStr = QT.getAsString();
-
-            // Function name
-            DeclarationName DeclName = f->getNameInfo().getName();
-            string FuncName = DeclName.getAsString();
-
-            // Add comment before
-            stringstream SSBefore;
-            SSBefore << "// Begin function " << FuncName << " returning "
-                     << TypeStr << "\n";
-            SourceLocation ST = f->getSourceRange().getBegin();
-            TheRewriter.InsertText(ST, SSBefore.str(), true, true);
-
-            // And after
-            stringstream SSAfter;
-            SSAfter << "\n// End function " << FuncName << "\n";
-            ST = FuncBody->getEndLoc().getLocWithOffset(1);
-            TheRewriter.InsertText(ST, SSAfter.str(), true, true);
-        }
-
-        return true;
-    }
-
 private:
 
     Rewriter &TheRewriter;
-    std::string delete_content="    b[0] = 1;";
-    std::string start_content="";
     int cyclic_factor = 4;
     int dim = 1;
 };

@@ -45,8 +45,10 @@ public:
             ForStmt *ForStatement = cast<ForStmt>(s);
             Stmt *Cond = ForStatement->getCond();
             Stmt *Operation = ForStatement->getBody();
+            printf("%s\n","Loop optimization code fragment:");
 
             string body_content = TheRewriter.getRewrittenText(Operation->getSourceRange());
+            
             if (body_content.find(pragma)!=string::npos){
                 llvm::outs() <<TheRewriter.getRewrittenText(s->getSourceRange())<<"\n";
             }
@@ -64,7 +66,6 @@ public:
         // Only function definitions (with bodies), not declarations.
         if (f->hasBody()) {
             Stmt *FuncBody = f->getBody();
-
             // Type name as string
             //QualType QT = f->getResultType();
             QualType QT = f->getReturnType();

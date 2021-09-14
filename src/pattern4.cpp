@@ -40,17 +40,6 @@ public:
     MyASTVisitor(Rewriter &R)
             : TheRewriter(R)
     {}
-    int GetLoopNumber(){
-        int j = total_element;
-        int loop = 0;
-
-        while (j>0){
-            j = j/2;
-            loop++;
-        }
-
-        return loop;
-    }
 
     bool VisitStmt(Stmt *s) {
         if (isa<DeclStmt>(s)){
@@ -76,28 +65,41 @@ public:
         printf("hello,%s\n",TheRewriter.getRewrittenText(s->getSourceRange()).c_str());
         if (location==TheRewriter.getRewrittenText(s->getSourceRange())){
                 printf("hello,%s",TheRewriter.getRewrittenText(s->getSourceRange()).c_str());
-                int j = total_element;
-                std::string def_code = "";
-                for (int i=1;i<loop_number;i++){
-                    def_code += target_type+" window"+to_string(i)+"["+to_string(j/2)+"] = {0};\n";
-                    j = j/2;
-                }
+                
+                std::string argument_code = "int SIZE = "+std::to_string(Size)+"\nint BLOCK_SIZE = "+std::to_string(Block_size)+"\n";
+                
+                std::string pattern_code = "void blockmatmul(hls::stream<blockvec> &Arows, hls::stream<blockvec> &Bcols, blockmat &ABpartial, int it) {\n
+                                            #pragma HLS DATAFLOW\n"+argument_code+"
+                                            int counter = it % (SIZE/BLOCK_SIZE);\n
+                                            static DTYPE A[BLOCK_SIZE][SIZE];\n
+                                            if(counter == 0){ //only load the A rows when necessary\n
+                                            loadA: for(int i = 0; i < SIZE; i++) {\n
+                                                blockvec tempA = Arows.read();\n
+                                                for(int j = 0; j < BLOCK_SIZE; j++) {\n
+                                                    #pragma HLS PIPELINE II=1\n
+                                                    A[j][i] = tempA.a[j];\n
+                                                }\n
+                                            }\n
+                                            }\n
+                                            DTYPE AB[BLOCK_SIZE][BLOCK_SIZE] = { 0 };\n
+                                            partialsum: for(int k=0; k < SIZE; k++) {\n
+                                                blockvec tempB = Bcols.read();\n
+                                                for(int i = 0; i < BLOCK_SIZE; i++) {\n
+                                                    for(int j = 0; j < BLOCK_SIZE; j++) {\n
+                                                        AB[i][j] = AB[i][j] +  A[i][k] * tempB.a[j];\n
+                                                    }\n
+                                                }\n
+                                            }\n
+                                            writeoutput: for(int i = 0; i < BLOCK_SIZE; i++) {\n
+                                                for(int j = 0; j < BLOCK_SIZE; j++) {\n
+                                                    ABpartial.out[i][j] = AB[i][j];\n
+                                                }\n
+                                            }\n
+                                        }\n";
+                
 
-                std::string loop_code = "";
-                j = total_element;
-                loop_code += "L1:for(ap_uint<"+to_string(loop_number)+"> x=0; x.to_uint()<"+to_string(j/2)+";x++){\n";
-                loop_code += "  #pragma HLS PIPELINE\n";
-                loop_code += "  window1[x] = "+target_varible+"[x]+"+target_varible+"["+to_string(j/2)+"+x];\n}\n";
-                j = j/2;
 
-                for (int i=2;i<loop_number;i++){
-                    loop_code += "L"+to_string(i)+":for(ap_uint<"+to_string(loop_number)+"> x=0; x.to_uint()<"+to_string(j/2)+";x++){\n";
-                    loop_code += "  #pragma HLS PIPELINE\n";
-                    loop_code += "  window"+to_string(i)+"[x] = window"+to_string(i-1)+"[x]+window"+to_string(i-1)+"["+to_string(j/2)+"+x];\n}\n";
-                    j=j/2;
-                }
-
-                TheRewriter.InsertText(s->getBeginLoc(),def_code+loop_code);
+                TheRewriter.InsertText(s->getBeginLoc(),pattern_code);
         }
 
         //if (delete_content==TheRewriter.getRewrittenText(s->getSourceRange())) {
@@ -107,50 +109,12 @@ public:
         return true;
     }
 
-    bool setArgument(std::string location_str){    
-        location = location_str;
-        return true;
-    }
-
-    bool VisitFunctionDecl(FunctionDecl *f) {
-        // Only function definitions (with bodies), not declarations.
-        if (f->hasBody()) {
-            Stmt *FuncBody = f->getBody();
-
-            // Type name as string
-            //QualType QT = f->getResultType();
-            QualType QT = f->getReturnType();
-            string TypeStr = QT.getAsString();
-
-            // Function name
-            DeclarationName DeclName = f->getNameInfo().getName();
-            string FuncName = DeclName.getAsString();
-
-            // Add comment before
-            stringstream SSBefore;
-            SSBefore << "// Begin function " << FuncName << " returning "
-                     << TypeStr << "\n";
-            SourceLocation ST = f->getSourceRange().getBegin();
-            TheRewriter.InsertText(ST, SSBefore.str(), true, true);
-
-            // And after
-            stringstream SSAfter;
-            SSAfter << "\n// End function " << FuncName << "\n";
-            ST = FuncBody->getEndLoc().getLocWithOffset(1);
-            TheRewriter.InsertText(ST, SSAfter.str(), true, true);
-        }
-
-        return true;
-    }
-
 private:
 
     Rewriter &TheRewriter;
     std::string location=location_str;
-    int total_element = 32;
-    int loop_number = GetLoopNumber();
-    std::string target_varible = "b";
-    std::string target_type = "";
+    int Size = 3;
+    int Block_size= 3;
 };
 
 

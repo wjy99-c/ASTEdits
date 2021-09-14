@@ -83,31 +83,12 @@ public:
     bool VisitFunctionDecl(FunctionDecl *f) {
         // Only function definitions (with bodies), not declarations.
         if (f->hasBody()) {
-            Stmt *FuncBody = f->getBody();
-
-            // Type name as string
-            //QualType QT = f->getResultType();
-            QualType QT = f->getReturnType();
-            string TypeStr = QT.getAsString();
 
             // Function name
             DeclarationName DeclName = f->getNameInfo().getName();
             string FuncName = DeclName.getAsString();
             function_array[function_num] = FuncName;
             function_num++;
-
-            // Add comment before
-            stringstream SSBefore;
-            SSBefore << "// Begin function " << FuncName << " returning "
-                     << TypeStr << "\n";
-            SourceLocation ST = f->getSourceRange().getBegin();
-            TheRewriter.InsertText(ST, SSBefore.str(), true, true);
-
-            // And after
-            stringstream SSAfter;
-            SSAfter << "\n// End function " << FuncName << "\n";
-            ST = FuncBody->getEndLoc().getLocWithOffset(1);
-            TheRewriter.InsertText(ST, SSAfter.str(), true, true);
         }
 
         return true;
