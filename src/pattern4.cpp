@@ -5,8 +5,6 @@
 // * Use the Rewriter API to rewrite the source code.
 //------------------------------------------------------------------------------
 
-
-//TODO: add Par argument number
 #include <cstdio>
 #include <string>
 #include <sstream>
@@ -42,25 +40,6 @@ public:
     {}
 
     bool VisitStmt(Stmt *s) {
-        if (isa<DeclStmt>(s)){
-            DeclStmt *del_stmt = cast<DeclStmt>(s);
-            Decl *del = del_stmt->getSingleDecl();
-            string type_string="";
-            string name="";
-            if (isa<VarDecl>(del)){
-                VarDecl *var_del = cast<VarDecl>(del);
-                name = var_del->getNameAsString();
-                const Type *type = var_del->getType().getTypePtr();
-                if (type->isConstantArrayType()){
-                    const ConstantArrayType *Array = cast<ConstantArrayType>(type);
-                    type_string = Array->getElementType().getAsString();
-                    //maybe we can use Array->getsize to update total_element
-                }
-                if (name == target_varible){
-                    target_type = type_string;
-                }
-            }
-        }
         
         printf("hello,%s\n",TheRewriter.getRewrittenText(s->getSourceRange()).c_str());
         if (location==TheRewriter.getRewrittenText(s->getSourceRange())){
@@ -68,43 +47,39 @@ public:
                 
                 std::string argument_code = "int SIZE = "+std::to_string(Size)+"\nint BLOCK_SIZE = "+std::to_string(Block_size)+"\n";
                 
-                std::string pattern_code = "void blockmatmul(hls::stream<blockvec> &Arows, hls::stream<blockvec> &Bcols, blockmat &ABpartial, int it) {\n
-                                            #pragma HLS DATAFLOW\n"+argument_code+"
-                                            int counter = it % (SIZE/BLOCK_SIZE);\n
-                                            static DTYPE A[BLOCK_SIZE][SIZE];\n
-                                            if(counter == 0){ //only load the A rows when necessary\n
-                                            loadA: for(int i = 0; i < SIZE; i++) {\n
-                                                blockvec tempA = Arows.read();\n
-                                                for(int j = 0; j < BLOCK_SIZE; j++) {\n
-                                                    #pragma HLS PIPELINE II=1\n
-                                                    A[j][i] = tempA.a[j];\n
-                                                }\n
-                                            }\n
-                                            }\n
-                                            DTYPE AB[BLOCK_SIZE][BLOCK_SIZE] = { 0 };\n
-                                            partialsum: for(int k=0; k < SIZE; k++) {\n
-                                                blockvec tempB = Bcols.read();\n
-                                                for(int i = 0; i < BLOCK_SIZE; i++) {\n
-                                                    for(int j = 0; j < BLOCK_SIZE; j++) {\n
-                                                        AB[i][j] = AB[i][j] +  A[i][k] * tempB.a[j];\n
-                                                    }\n
-                                                }\n
-                                            }\n
-                                            writeoutput: for(int i = 0; i < BLOCK_SIZE; i++) {\n
-                                                for(int j = 0; j < BLOCK_SIZE; j++) {\n
-                                                    ABpartial.out[i][j] = AB[i][j];\n
-                                                }\n
-                                            }\n
-                                        }\n";
+                std::string pattern_code = "void blockmatmul(hls::stream<blockvec> &Arows, hls::stream<blockvec> &Bcols, blockmat &ABpartial, int it) {\n "
+                                            "#pragma HLS DATAFLOW\n"+argument_code+
+                                            "int counter = it % (SIZE/BLOCK_SIZE);\n"
+                                            "static DTYPE A[BLOCK_SIZE][SIZE];\n"
+                                            "if(counter == 0){ //only load the A rows when necessary\n"
+                                            "loadA: for(int i = 0; i < SIZE; i++) {\n"
+                                            "    blockvec tempA = Arows.read();\n"
+                                            "    for(int j = 0; j < BLOCK_SIZE; j++) {\n"
+                                            "        #pragma HLS PIPELINE II=1\n"
+                                            "        A[j][i] = tempA.a[j];\n"
+                                            "    }\n"
+                                            "}\n"
+                                            "}\n"
+                                            "DTYPE AB[BLOCK_SIZE][BLOCK_SIZE] = { 0 };\n"
+                                            "partialsum: for(int k=0; k < SIZE; k++) {\n"
+                                            "    blockvec tempB = Bcols.read();\n"
+                                            "    for(int i = 0; i < BLOCK_SIZE; i++) {\n"
+                                            "        for(int j = 0; j < BLOCK_SIZE; j++) {\n"
+                                            "            AB[i][j] = AB[i][j] +  A[i][k] * tempB.a[j];\n"
+                                            "        }\n"
+                                            "    }\n"
+                                            "}\n"
+                                            "writeoutput: for(int i = 0; i < BLOCK_SIZE; i++) {\n"
+                                            "    for(int j = 0; j < BLOCK_SIZE; j++) {\n"
+                                            "        ABpartial.out[i][j] = AB[i][j];\n"
+                                            "    }\n"
+                                            "}\n"
+                                        "}\n";
                 
 
 
                 TheRewriter.InsertText(s->getBeginLoc(),pattern_code);
         }
-
-        //if (delete_content==TheRewriter.getRewrittenText(s->getSourceRange())) {
-        //    TheRewriter.RemoveText(s->getSourceRange());
-        //}
 
         return true;
     }

@@ -69,7 +69,7 @@ all: make_builddir \
 		$(BUILDDIR)/pattern1 \
 		$(BUILDDIR)/pattern4 \
 		$(BUILDDIR)/pattern2 \
-		$(BUILDDIR)/pattern_extract_14 \
+		$(BUILDDIR)/pattern_extract_1 \
 		$(BUILDDIR)/pattern_extract_5 \
 		$(BUILDDIR)/pattern_extract_236 
 
@@ -106,7 +106,7 @@ $(BUILDDIR)/pattern2: $(SRC_CLANG_DIR)/pattern2.cpp
 	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
 		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
 
-$(BUILDDIR)/pattern_extract_14: $(SRC_CLANG_DIR)/pattern_extract_14.cpp
+$(BUILDDIR)/pattern_extract_1: $(SRC_CLANG_DIR)/pattern_extract_1.cpp
 	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
 		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
 

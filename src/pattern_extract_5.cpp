@@ -42,38 +42,14 @@ public:
         clang::SourceManager &srcmgr = TheRewriter.getSourceMgr();
 
         //find #pragma dataflow
-        if (flag == false){                                 
-            if (TheRewriter.getRewrittenText(s->getSourceRange()).find(pragma)!=string::npos){
-                start_line_num = srcmgr.getExpansionLineNumber(startloc);
-                function_map[0] = true;
+        if (flag == false){    
+            std::size_t position = TheRewriter.getRewrittenText(s->getSourceRange()).find(pragma);                            
+            if (position!=string::npos){
+                llvm::outs() <<TheRewriter.getRewrittenText(s->getSourceRange())<<"\n";
+                extract_content = TheRewriter.getRewrittenText(s->getSourceRange()).substr(position);
 
                 flag = true;
             }
-        }
-
-        //find following function call
-        else{
-            int line_num = srcmgr.getExpansionLineNumber(startloc);
-            flag = false;
-            for (int i=0;i<function_num;i++){
-                if (TheRewriter.getRewrittenText(s->getSourceRange())==function_array[i]){
-                    if ((line_num-start_line_num>0)&(function_map[line_num-start_line_num-1])) {
-                        function_map[line_num-start_line_num] = true;
-                        flag = true;
-                    }
-                }
-            }
-            if (!function_map[line_num-start_line_num]){
-                int i=0;
-                while (function_map[i]){
-                    function_map[i] = false;
-                    i++;
-                }
-            }
-            else {
-                flag = false;
-            }
-            
         }
 
 
@@ -99,7 +75,7 @@ private:
     Rewriter &TheRewriter;
     std::string function_array[100];
     bool function_map[100];
-    int start_line_num = 0;
+    std::string extract_content;
     int function_num = 0;
     bool flag = false;
     std::string pragma = "#pragma HLS dataflow";
