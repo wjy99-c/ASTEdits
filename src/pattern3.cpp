@@ -6,9 +6,9 @@
 //------------------------------------------------------------------------------
 
 
-//TODO: add Par argument number
 #include <cstdio>
 #include <string>
+#include <stdlib.h>
 #include <sstream>
 
 #include "clang/AST/ASTConsumer.h"
@@ -28,6 +28,7 @@
 
 using namespace clang;
 using namespace std;
+int trade_off = 3;
 
 
 // By implementing RecursiveASTVisitor, we can specify which AST nodes
@@ -41,10 +42,13 @@ public:
 
     bool VisitStmt(Stmt *s) {
         // Only care about for statements.
-        if (isa<ForStmt>(s)) {
+        if (isa<ForStmt>(s) && (rand() % 3 > trade_off)) { // only add pipeline in inner for
             ForStmt *ForStatement = cast<ForStmt>(s);
             Stmt *Cond = ForStatement->getCond();
             Stmt *Operation = ForStatement->getBody();
+            if (TheRewriter.getRewrittenText(Operation->getSourceRange()).find("for") && trade_off!=1){
+                return true;
+            }
             TheRewriter.InsertText(Operation->getBeginLoc().getLocWithOffset(1),"#pragma HLS ARRAY_PARTITION variable=f cyclic factor="+to_string(cyclic_factor)+" dim="+to_string(dim)+"\n",true, true);
             //TheRewriter.RemoveText(s->getSourceRange());
             TheRewriter.InsertText(Cond->getBeginLoc(),"\n#pragma HLS UNROLL factor="+to_string(cyclic_factor)+"\n#pragma HLS pipeline\n");
@@ -60,7 +64,6 @@ public:
 private:
 
     Rewriter &TheRewriter;
-    std::string delete_content="    b[0] = 1;";
     int cyclic_factor = 4;
     int dim = 1;
 };
@@ -92,9 +95,13 @@ private:
 
 int main(int argc, char *argv[])
 {
-    if (argc != 2) {
+    if (argc < 2) {
         llvm::errs() << "Usage: delete_code <filename>\n";
         return 1;
+    }
+
+    if (argc > 2){
+        trade_off = argv[2];
     }
 
     // CompilerInstance will hold the instance of the Clang compiler for us,
